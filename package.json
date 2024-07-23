@@ -16,6 +16,8 @@
     "expo-camera": "~15.0.14",
     "expo-image-picker": "~15.0.7",
     "expo-status-bar": "~1.12.1",
+    "form-data": "^4.0.0",
+    "fs": "^0.0.1-security",
     "react": "18.2.0",
     "react-native": "0.74.3",
     "react-native-vector-icons": "^10.1.0",
