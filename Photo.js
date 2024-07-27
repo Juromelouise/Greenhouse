@@ -14,7 +14,7 @@ import axios from "axios";
 import Plant from "./Plant";
 import { GlobalContext } from "./GlobalState";
 
-const API_KEY = "KAWOOQR0sefargYA2neMtNQfkLlWhfcwfkqFa2HQCiJot6lRxL";
+// const API_KEY = "KAWOOQR0sefargYA2neMtNQfkLlWhfcwfkqFa2HQCiJot6lRxL";
 
 const Photo = () => {
   const [image, setImage] = useState(null);
@@ -23,26 +23,46 @@ const Photo = () => {
   const [seeMore, setSeeMore] = useState(false);
   const [buttonTitle, setButtonTitle] = useState("See more related results");
   const [loading, setLoading] = useState(false);
+  const [plant, setPlant] = useState({});
 
   const { apikey, ip, setIp, setApiKey } = useContext(GlobalContext);
 
-  const postToServer = async (health) => {
-    const diseases = health?.disease?.suggestions?.map((disease) => {
-      return {
-        name: disease.name,
-        probability: (disease.probability * 100).toFixed(2) + "%",
-        description: disease.details.description,
-        treatment: disease.details.treatment,
-      };
-    });
+  // console.log(`${ip}/plant-health`);
 
-    // CREATE AXIOS POST
+  const postToServer = async (health, plant) => {
+    try {
+      const diseases = health?.disease?.suggestions?.map((disease) => {
+        return {
+          name: disease.name,
+          probability: (disease.probability * 100).toFixed(2) + "%",
+          description: disease.details.description,
+          treatment: disease.details.treatment,
+        };
+      });
+
+      const data = {
+        plant: {
+          plant_names: plant?.details?.common_names,
+          plant_description: plant.details?.description?.value,
+          // plant_image: image,
+        },
+        diseases: diseases,
+      };
+
+      // CREATE AXIOS POST
+      console.log(data);
+
+      const response = await axios.post(`${ip}/plant-health`, data);
+      console.log(response);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  const healthAssesment = async (base64Image) => {
+  const healthAssesment = async (base64Image, data) => {
     try {
       const response = await axios.post(
-        `https://plant.id/api/v3/health_assessment?details=local_name,description,url,treatment,classification,common_names,cause`,
+        `https://plant.id/api/v3/health_assessment?details=local_name,description,url,treatment,common_names`,
         {
           images: [base64Image],
           similar_images: true,
@@ -56,7 +76,7 @@ const Photo = () => {
           },
         }
       );
-      postToServer(response.data.result);
+      postToServer(response.data.result, data);
     } catch (err) {
       console.log(err);
       resetData();
@@ -86,8 +106,13 @@ const Photo = () => {
           },
         }
       );
-      // console.log(response.data.result.classification.suggestions);
+
+      setPlant(response.data.result.classification.suggestions[0]);
       setSuggestions(response.data.result.classification.suggestions);
+      healthAssesment(
+        base64Image,
+        response.data.result.classification.suggestions[0]
+      );
       setHasResult(true);
       setLoading(false);
     } catch (err) {
@@ -111,9 +136,9 @@ const Photo = () => {
     // console.log(result);
 
     if (!result.canceled) {
-      setImage(result.assets[0].uri);
+      // setImage(result.assets[0].base64);
       indentifyImage(result.assets[0].base64);
-      healthAssesment(result.assets[0].base64);
+      // healthAssesment(result.assets[0].base64);
     }
   };
 
@@ -129,8 +154,8 @@ const Photo = () => {
       });
 
       if (!result.canceled) {
-        console.log(result.assets);
-        setImage(result.assets[0].uri);
+        // console.log(result.assets);
+        // setImage(result.assets[0].base64);
         indentifyImage(result.assets[0].base64);
       }
     }
